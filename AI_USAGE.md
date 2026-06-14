@@ -1,46 +1,85 @@
+#AI Tools Used
+During the implementation of SettleWise, I used AI tools as engineering assistants rather than autonomous developers.
 
-//PHASE 2
-Tool:
-Antigravity 2.0
+#Tools Used
+1.ChatGPT (Architecture planning, code review, debugging, documentation)
+2.Antigravity 2.0 (Code generation assistance and implementation acceleration)
 
-Task:
-Generate authentication and group management modules.
+All generated code was manually reviewed, tested, modified where necessary, and integrated into the final solution by me.
 
-Issue:
-Suggested hardcoded JWT secret.
+#Typical Prompts Used
+Examples of prompts used during development:
+*Design a PostgreSQL schema for a shared expense management system with membership timelines.
+*Review my Prisma schema and identify missing constraints.
+*Generate Express controller structure for JWT authentication.
+*Review balance calculation logic for debt simplification.
+*Suggest anomaly detection strategies for CSV import workflows.
+*Generate React Query hooks for CRUD operations.
+*Review deployment configuration for Render and Vercel.
 
-Fix:
-Moved secret to environment variables and excluded .env from version control.
+#How AI Was Used
+AI was primarily used for:
+*Brainstorming architecture
+*Generating boilerplate code
+*Reviewing API design
+*Identifying edge cases
+*Explaining framework-specific issues
+*Deployment troubleshooting
+
+All business rules, anomaly handling decisions, validation policies, and testing were reviewed manually.
+
+Cases Where AI Output Was Incorrect
+
+Case 1: Settlement Balance Formula
+AI initially suggested:
+net = paid - owed + settlementsSent - settlementsReceived
+
+After manually testing settlement scenarios, I identified that the formula produced incorrect balances.
+
+Example:
+If Rohan pays Aisha ₹1000:
+
+*Rohan's liability should decrease.
+*Aisha's receivable should decrease.
+
+I corrected the implementation to:
+net = paid - owed - settlementsSent + settlementsReceived
+
+and re-tested settlement calculations.
 
 
-//phase 3
-Tool:
-Antigravity 2.0
+Case 2: Prisma Migration Deployment Strategy
+AI initially suggested deploying with:
+npx prisma migrate deploy
+During deployment testing, Prisma reported that the database was not managed by Prisma Migrate because the schema had been created using db push.
 
-Task:
-Expense Engine generation
+I identified the issue by running:
+npx prisma migrate status
+and modified the deployment strategy accordingly.
 
-Issue:
-Suggested rejecting all non-EQUAL split types.
+Case 3: Production Frontend Configuration
 
-Problem:
-Assignment requires support for multiple split types.
+AI-generated frontend code assumed localhost API endpoints.
+After deployment, login requests were still targeting:
+http://localhost:5000
 
-Fix:
-Added extensible service architecture with placeholders for EXACT, PERCENTAGE, and SHARES calculations.
+I identified this through browser developer tools and fixed the implementation to use:
 
-//phase 4
-Tool:
-Antigravity 2.0
+VITE_API_URL
 
-Task:
-Balance Engine generation.
+with environment-based configuration.
 
-Issue:
-Initial algorithm ignored settlement records.
 
-Problem:
-Balances would remain unchanged after debt repayment.
+Verification Process
 
-Fix:
-Included settlements in the net balance calculation formula.
+For every major feature:
+
+1.Generate implementation.
+2.Review generated code.
+3.Verify business logic manually.
+4.Execute API tests using Postman.
+5.Test edge cases.
+6.Refactor where necessary.
+7.Commit only after validation.
+
+This process ensured I remained responsible for the final codebase and behavior of the application.
