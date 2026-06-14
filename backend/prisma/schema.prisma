@@ -76,16 +76,18 @@ model Group {
 model GroupMembership {
   id String @id @default(uuid())
 
-  userId  String
+  userId String
   groupId String
 
   joinedAt DateTime
-  leftAt   DateTime?
+  leftAt DateTime?
 
-  user  User  @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
   group Group @relation(fields: [groupId], references: [id])
-  @@unique([userId, groupId])
+
   createdAt DateTime @default(now())
+
+  @@unique([userId, groupId])
 }
 
 model Expense {
@@ -112,7 +114,7 @@ model Expense {
 
   participants ExpenseParticipant[]
 
-  @@unique([expenseId, userId])
+
 
   createdAt DateTime @default(now())
 }
@@ -128,6 +130,8 @@ model ExpenseParticipant {
   expense Expense @relation(fields: [expenseId], references: [id])
 
   user User @relation(fields: [userId], references: [id])
+
+  @@unique([expenseId, userId])
 }
 
 model ImportJob {
