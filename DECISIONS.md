@@ -13,3 +13,10 @@ Validate membership timelines when creating expenses.
 Reason:
 Members should only participate in expenses during periods they belong to the group.
 This prevents former members from being charged for future expenses.
+
+//phase 4
+Decision:
+Balance calculations incorporate recorded settlements.
+
+Reason:
+Debt settlement must reduce outstanding balances and reflect real payment activity.
