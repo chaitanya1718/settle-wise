@@ -1,4 +1,6 @@
 const prisma = require("../config/prisma");
+const balanceService = require("../services/balance.service");
+
 
 /**
  * Create a new group.
@@ -232,9 +234,111 @@ const removeMember = async (req, res) => {
   }
 };
 
+/**
+ * Get all groups that the user is currently associated with.
+ * 
+ * GET /api/groups
+ */
+const getGroups = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const groups = await prisma.group.findMany({
+      where: {
+        memberships: {
+          some: {
+            userId
+          }
+        }
+      },
+      select: {
+        id: true,
+        name: true
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
+    return res.status(200).json(groups);
+  } catch (error) {
+    console.error("Get groups error:", error);
+    return res.status(500).json({
+      error: "Internal server error."
+    });
+  }
+};
+
+/**
+ * Get group dashboard summary.
+ * GET /api/groups/:id/dashboard
+ */
+const getGroupDashboard = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate group exists
+    const group = await prisma.group.findUnique({
+      where: { id }
+    });
+    if (!group) {
+      return res.status(404).json({
+        error: "Group not found."
+      });
+    }
+
+    // 1. Calculate total expenses
+    const expenseSum = await prisma.expense.aggregate({
+      where: { groupId: id },
+      _sum: {
+        amount: true
+      }
+    });
+    const totalExpenses = expenseSum._sum.amount ? parseFloat(expenseSum._sum.amount.toString()) : 0;
+
+    // 2. Count members
+    const memberCount = await prisma.groupMembership.count({
+      where: {
+        groupId: id,
+        leftAt: null
+      }
+    });
+
+    // 3. Count pending imports
+    const pendingImports = await prisma.importJob.count({
+      where: {
+        status: "PENDING"
+      }
+    });
+
+    // 4. Calculate outstanding settlements from balance service
+    let outstandingSettlements = 0;
+    try {
+      const settlements = await balanceService.getGroupSettlements(id);
+      outstandingSettlements = settlements.length;
+    } catch (err) {
+      console.warn("Failed to calculate group settlements for dashboard:", err.message);
+      outstandingSettlements = 0;
+    }
+
+    return res.status(200).json({
+      totalExpenses,
+      memberCount,
+      pendingImports,
+      outstandingSettlements
+    });
+  } catch (error) {
+    console.error("Get group dashboard error:", error);
+    return res.status(500).json({
+      error: "Internal server error."
+    });
+  }
+};
+
 module.exports = {
   createGroup,
   getGroup,
   addMember,
-  removeMember
+  removeMember,
+  getGroups,
+  getGroupDashboard
 };
+

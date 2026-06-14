@@ -75,7 +75,7 @@ const validateGroupMemberships = async (tx, groupId, payerId, participants, expe
 /**
  * Create a new expense with participants and calculated splits.
  */
-const createExpense = async (data) => {
+const createExpense = async (data, tx) => {
   const { title, description, amount, currency, splitType, expenseDate, payerId, groupId, participants } = data;
 
   // Basic validations
@@ -92,15 +92,15 @@ const createExpense = async (data) => {
     throw new Error("At least one participant is required.");
   }
 
-  return await prisma.$transaction(async (tx) => {
+  const execute = async (client) => {
     // 1. Verify group exists
-    const groupExists = await tx.group.findUnique({ where: { id: groupId } });
+    const groupExists = await client.group.findUnique({ where: { id: groupId } });
     if (!groupExists) {
       throw new Error("The specified group does not exist.");
     }
 
     // 2. Validate membership timelines (payer and participants must be active on the expenseDate)
-    await validateGroupMemberships(tx, groupId, payerId, participants, expenseDate);
+    await validateGroupMemberships(client, groupId, payerId, participants, expenseDate);
 
     // 3. Compute shares based on split type
     let participantShares = [];
@@ -119,7 +119,7 @@ const createExpense = async (data) => {
     }
 
     // 4. Create main Expense record
-    const expense = await tx.expense.create({
+    const expense = await client.expense.create({
       data: {
         title: title.trim(),
         description: description ? description.trim() : null,
@@ -133,7 +133,7 @@ const createExpense = async (data) => {
     });
 
     // 5. Create ExpenseParticipant records
-    await tx.expenseParticipant.createMany({
+    await client.expenseParticipant.createMany({
       data: participantShares.map(share => ({
         expenseId: expense.id,
         userId: share.userId,
@@ -142,7 +142,7 @@ const createExpense = async (data) => {
     });
 
     // Return the complete expense including participants
-    return await tx.expense.findUnique({
+    return await client.expense.findUnique({
       where: { id: expense.id },
       include: {
         participants: {
@@ -154,7 +154,15 @@ const createExpense = async (data) => {
         }
       }
     });
-  });
+  };
+
+  if (tx) {
+    return await execute(tx);
+  } else {
+    return await prisma.$transaction(async (t) => {
+      return await execute(t);
+    });
+  }
 };
 
 /**

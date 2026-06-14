@@ -11,7 +11,8 @@ const prisma = require("../config/prisma");
  *   "currency": "INR"
  * }
  */
-const createSettlement = async (data) => {
+const createSettlement = async (data, tx) => {
+  const client = tx || prisma;
   const { payerId, receiverId, amount, currency } = data;
 
   if (!payerId || !receiverId || !amount || !currency) {
@@ -24,14 +25,14 @@ const createSettlement = async (data) => {
   }
 
   // Verify users exist
-  const payerExists = await prisma.user.findUnique({ where: { id: payerId } });
+  const payerExists = await client.user.findUnique({ where: { id: payerId } });
   if (!payerExists) {
     const error = new Error("Payer user not found.");
     error.statusCode = 404;
     throw error;
   }
 
-  const receiverExists = await prisma.user.findUnique({ where: { id: receiverId } });
+  const receiverExists = await client.user.findUnique({ where: { id: receiverId } });
   if (!receiverExists) {
     const error = new Error("Receiver user not found.");
     error.statusCode = 404;
@@ -39,7 +40,7 @@ const createSettlement = async (data) => {
   }
 
   // Create settlement record
-  return await prisma.settlement.create({
+  return await client.settlement.create({
     data: {
       payerId,
       receiverId,

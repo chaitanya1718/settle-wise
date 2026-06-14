@@ -9,7 +9,9 @@ router.use(authMiddleware);
 
 // Group Routing
 router.post("/", groupController.createGroup);
+router.get("/", groupController.getGroups);
 router.get("/:id", groupController.getGroup);
+router.get("/:id/dashboard", groupController.getGroupDashboard);
 router.post("/:id/members", groupController.addMember);
 router.patch("/:id/members/:membershipId/leave", groupController.removeMember);
 

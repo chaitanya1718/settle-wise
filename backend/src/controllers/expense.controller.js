@@ -8,6 +8,7 @@ const createExpense = async (req, res) => {
   try {
     const expense = await expenseService.createExpense(req.body);
     return res.status(201).json({
+      success: true,
       message: "Expense created successfully.",
       expense
     });
