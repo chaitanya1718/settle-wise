@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/auth.routes");
 const groupRoutes = require("./routes/group.routes");
+const expenseRoutes = require("./routes/expense.routes");
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(express.json());
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/groups", groupRoutes);
+app.use("/api/expenses", expenseRoutes);
 
 // Base route for healthcheck
 app.get("/", (req, res) => {
