@@ -1,0 +1,10 @@
+node_modules
+.env
+
+backend/node_modules
+clientside/node_modules
+
+dist
+build
+
+.prisma

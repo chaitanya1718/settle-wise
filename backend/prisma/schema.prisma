@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MembershipStatus {
+  ACTIVE
+  LEFT
+}
+
+enum SettlementStatus {
+  PENDING
+  COMPLETED
+}
+
+enum ImportStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String
+
+  memberships GroupMembership[]
+
+  expensesPaid  Expense[]            @relation("ExpensePayer")
+  expenseShares ExpenseParticipant[]
+
+  settlementsSent     Settlement[] @relation("SettlementPayer")
+  settlementsReceived Settlement[] @relation("SettlementReceiver")
+
+  createdAt DateTime @default(now())
+}
+
+model Settlement {
+  id String @id @default(uuid())
+
+  payerId    String
+  receiverId String
+
+  payer    User @relation("SettlementPayer", fields: [payerId], references: [id])
+  receiver User @relation("SettlementReceiver", fields: [receiverId], references: [id])
+
+  amount   Decimal
+  currency String
+
+  status SettlementStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+}
+
+model Group {
+  id   String @id @default(uuid())
+  name String
+
+  memberships GroupMembership[]
+  expenses    Expense[]
+
+  createdAt DateTime @default(now())
+}
+
+model GroupMembership {
+  id String @id @default(uuid())
+
+  userId  String
+  groupId String
+
+  joinedAt DateTime
+  leftAt   DateTime?
+
+  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+  @@unique([userId, groupId])
+  createdAt DateTime @default(now())
+}
+
+model Expense {
+  id String @id @default(uuid())
+
+  title       String
+  description String?
+
+  amount Decimal
+
+  splitType String @default("EQUAL")
+
+  currency String
+
+  expenseDate DateTime
+
+  payerId String
+  groupId String
+
+  payer User  @relation("ExpensePayer", fields: [payerId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+
+
+
+  participants ExpenseParticipant[]
+
+  @@unique([expenseId, userId])
+
+  createdAt DateTime @default(now())
+}
+
+model ExpenseParticipant {
+  id String @id @default(uuid())
+
+  expenseId String
+  userId    String
+
+  shareAmount Decimal
+
+  expense Expense @relation(fields: [expenseId], references: [id])
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model ImportJob {
+  id String @id @default(uuid())
+
+  fileName String
+
+  status ImportStatus @default(PENDING)
+
+  anomalies ImportAnomaly[]
+
+  createdAt DateTime @default(now())
+}
+
+model ImportAnomaly {
+  id String @id @default(uuid())
+
+  importJobId String
+
+  rowNumber Int
+
+  anomalyType String
+
+  severity String @default("MEDIUM")
+
+  description String
+
+  actionTaken String
+
+  reviewStatus ReviewStatus @default(PENDING)
+
+  importJob ImportJob @relation(fields: [importJobId], references: [id])
+
+  createdAt DateTime @default(now())
+}
