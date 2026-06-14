@@ -15,6 +15,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "https://settle-wise-1lns5oufo-chaitanya1718s-projects.vercel.app",
       process.env.VITE_API_URL
     ],
     credentials: true
