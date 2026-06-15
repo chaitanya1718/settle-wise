@@ -7,6 +7,7 @@ import { GroupProvider } from "./contexts/GroupContext";
 
 // Pages
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Expenses from "./pages/Expenses";
 import Balances from "./pages/Balances";
@@ -65,6 +66,7 @@ const App = () => {
             <Routes>
               {/* Public Route */}
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
               {/* Protected Routes */}
               <Route element={<ProtectedLayout />}>

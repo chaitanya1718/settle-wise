@@ -1,17 +1,17 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../api/axios";
 
-const Login = () => {
+const Register = () => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-  const [successMsg, setSuccessMsg] = useState(location.state?.registrationSuccess || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   // If user is already authenticated, redirect
   React.useEffect(() => {
@@ -22,26 +22,39 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setErrorMsg("Please enter both email and password.");
+
+    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+      setErrorMsg("All fields are required.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMsg("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMsg("Password must be at least 6 characters long.");
       return;
     }
 
     setIsSubmitting(true);
     setErrorMsg("");
-    setSuccessMsg("");
 
     try {
-      const res = await api.post("/auth/login", { email, password });
-      const { token, user } = res.data;
-      login(token, user);
-      
-      // Navigate to intended page or dashboard
-      const origin = location.state?.from?.pathname || "/";
-      navigate(origin, { replace: true });
+      await api.post("/auth/register", {
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
+
+      // Redirect to login page with success state
+      navigate("/login", {
+        state: { registrationSuccess: "Account created successfully! Please log in." },
+      });
     } catch (err) {
-      console.error("Login failed:", err);
-      const serverErr = err.response?.data?.error || "Invalid email or password.";
+      console.error("Registration failed:", err);
+      const serverErr = err.response?.data?.error || "Registration failed. Please try again.";
       setErrorMsg(serverErr);
     } finally {
       setIsSubmitting(false);
@@ -55,13 +68,31 @@ const Login = () => {
           SettleWise
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Simplify expense splits and settle debts instantly
+          Create an account to manage your shared expenses
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-sm border border-gray-200 sm:rounded-2xl sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="name" className="block text-sm font-semibold text-gray-700">
+                Full Name
+              </label>
+              <div className="mt-1">
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  placeholder="John Doe"
+                />
+              </div>
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
                 Email address
@@ -90,7 +121,6 @@ const Login = () => {
                   id="password"
                   name="password"
                   type="password"
-                  autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -100,20 +130,23 @@ const Login = () => {
               </div>
             </div>
 
-            {successMsg && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-semibold text-green-800">{successMsg}</p>
-                  </div>
-                </div>
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700">
+                Confirm Password
+              </label>
+              <div className="mt-1">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  placeholder="••••••••"
+                />
               </div>
-            )}
+            </div>
 
             {errorMsg && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4">
@@ -136,23 +169,17 @@ const Login = () => {
                 disabled={isSubmitting}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150 disabled:opacity-50"
               >
-                {isSubmitting ? "Signing in..." : "Sign in"}
+                {isSubmitting ? "Creating account..." : "Sign up"}
               </button>
             </div>
           </form>
 
           <div className="mt-6 border-t border-gray-150 pt-4 text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link to="/register" className="font-semibold text-primary-600 hover:text-primary-500">
-                Sign up
+              Already have an account?{" "}
+              <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-500">
+                Sign in
               </Link>
-            </p>
-          </div>
-
-          <div className="mt-6 border-t border-gray-150 pt-4 text-center">
-            <p className="text-xs text-gray-400">
-              Demo Credentials: Use aisha@test.com, rohan@test.com, priya@test.com etc. with password Password123
             </p>
           </div>
         </div>
@@ -161,4 +188,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;
