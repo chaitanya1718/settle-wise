@@ -4,14 +4,14 @@ import { useAuth } from "../contexts/AuthContext";
 import api from "../api/axios";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState(location.state?.registrationSuccess || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   // If user is already authenticated, redirect
   React.useEffect(() => {
